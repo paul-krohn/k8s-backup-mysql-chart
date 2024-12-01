@@ -1,0 +1,97 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "k8s-backup-mysql.fullname" . }}
+  labels:
+    {{- include "k8s-backup-mysql.labels" . | nindent 4 }}
+spec:
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          {{- with .Values.podAnnotations }}
+          annotations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          labels:
+            {{- include "k8s-backup-mysql.labels" . | nindent 12 }}
+            {{- with .Values.podLabels }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+        spec:
+          restartPolicy: "OnFailure"
+          containers:
+            - name: backup
+              env:
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                      secretKeyRef:
+                        name: {{ include "secretName" . }}
+                        key: aws_access_key_id
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                      secretKeyRef:
+                        name: {{ include "secretName" . }}
+                        key: aws_secret_access_key
+                - name: AWS_DEFAULT_REGION
+                  value: "<Your S3 Bucket Region>"
+                - name: AWS_BUCKET_NAME
+                  value: "{{ .Values.bucket.name }}"
+                - name: AWS_BUCKET_BACKUP_PATH
+                  value: ""
+                - name: TARGET_DATABASE_HOST
+                  value: "{{ .Values.database.host }}"
+                - name: TARGET_DATABASE_PORT
+                  value: "{{ .Values.database.port }}"
+                - name: TARGET_DATABASE_NAMES
+                  value: "{{ .Values.database.names | join "," }}"
+                - name: TARGET_DATABASE_USER
+                  valueFrom:
+                      secretKeyRef:
+                        name: {{ include "secretName" . }}
+                        key: user
+                - name: TARGET_DATABASE_PASSWORD
+                  valueFrom:
+                      secretKeyRef:
+                        name: {{ include "secretName" . }}
+                        key: password
+                {{- if .Values.notify.enabled }}
+                - name: NOTIFY_ENABLED
+                  value: "true"
+                - name: NOTIFY_CHANNEL
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "secretName" . }}
+                      key: channel
+                - name: NOTIFICATION_WEBHOOK_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "secretName" . }}
+                      key: webhookUrl
+                {{- end }}
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              resources:
+                {{- toYaml .Values.resources | nindent 16 }}
+              {{- with .Values.volumeMounts }}
+              volumeMounts:
+                {{- toYaml . | nindent 16 }}
+              {{- end }}
+          {{- with .Values.volumes }}
+          volumes:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+  schedule: {{ .Values.schedule }}

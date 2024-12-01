@@ -14,6 +14,25 @@ imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
+bucket:
+  name: empty
+  region: empty
+  endpoint: empty
+  aws_access_key_id: empty
+  aws_secret_access_key: empty
+database:
+  host: empty
+  port: empty
+  names: []
+  user: empty
+  password: empty
+notify:
+  enabled: false
+  channel: set_me
+  webhookUrl: set_me
+
+schedule: '0 1 * * *'
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: true
