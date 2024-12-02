@@ -5,9 +5,8 @@
 replicaCount: 1
 
 image:
-  repository: docker pull pkrohn/k8s-backup-mysql
-  pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+  repository: pkrohn/k8s-backup-mysql
+  pullPolicy: Always
   tag: dev
 
 imagePullSecrets: []
@@ -15,14 +14,15 @@ nameOverride: ""
 fullnameOverride: ""
 
 bucket:
-  name: empty
-  region: empty
-  endpoint: empty
+  url: s3://bucket-name/  # yes with trailing /
+  prefix: "backups"  # no trailing /
+  region: "us-east-1"
   aws_access_key_id: empty
   aws_secret_access_key: empty
+  s3_options: []
 database:
   host: empty
-  port: empty
+  port: "3306"
   names: []
   user: empty
   password: empty

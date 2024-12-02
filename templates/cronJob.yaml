@@ -24,6 +24,8 @@ spec:
           containers:
             - name: backup
               env:
+                - name: DEBUG
+                  value: "truthy"
                 - name: AWS_ACCESS_KEY_ID
                   valueFrom:
                       secretKeyRef:
@@ -34,12 +36,18 @@ spec:
                       secretKeyRef:
                         name: {{ include "secretName" . }}
                         key: aws_secret_access_key
+                {{- if ne .Values.bucket.region "" }}
                 - name: AWS_DEFAULT_REGION
-                  value: "<Your S3 Bucket Region>"
-                - name: AWS_BUCKET_NAME
-                  value: "{{ .Values.bucket.name }}"
+                  value: "{{ .Values.bucket.region }}"
+                {{- end }}
+                - name: AWS_BUCKET_URI
+                  value: "{{ .Values.bucket.url }}"
                 - name: AWS_BUCKET_BACKUP_PATH
-                  value: ""
+                  value: "{{ .Values.bucket.prefix }}"
+                {{- if (len .Values.bucket.s3_options) }}
+                - name: S3_OPTIONS
+                  value: {{ join " " .Values.bucket.s3_options }}
+                {{- end }}
                 - name: TARGET_DATABASE_HOST
                   value: "{{ .Values.database.host }}"
                 - name: TARGET_DATABASE_PORT
