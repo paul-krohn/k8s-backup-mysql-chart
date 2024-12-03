@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+TAG=$(git diff --quiet || echo "dev")
+
+if [[ "${TAG}" == "" ]] ; then
+  TAG="$(git tag --points-at HEAD)";
+  if [[ "${TAG}" == "" ]] ; then 
+    TAG=latest;
+  fi  
+fi
+echo "${TAG}"
